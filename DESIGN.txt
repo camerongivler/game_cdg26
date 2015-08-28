@@ -1,0 +1,14 @@
+
+
+My project will be a top-down scrolling shooter.  The goal will be to shoot and destroy all
+the enemies before they shoot you.  The enemies will be in a grid at the top of the screen
+and will be moving in a predefined way so that shooting them is not completely simple.
+They will fire bullets toward the bottom of the screen in random intervals.  The enemy
+spaceships will probably each have a certain amount of health, so that it takes more than a
+single bullet to destroy them.  Similarly, the user's spaceship will have a health bar
+which is visible to the user, and when that health bar decreases to zero, the user will
+lose.
+
+In a second level, ships will not just move around at the top of the screen, but will, in
+random intervals, fly down to the bottom of the screen in the general direction of the
+user's ship to get a better shot.
