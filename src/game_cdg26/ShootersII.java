@@ -21,6 +21,7 @@ public class ShootersII {
 
 	private Scene myScene;
 	private DirectionImageSprite myShip;
+	private PathImageSprite myEnemy;
 
 	private int myWindowWidth;
 	private int myWindowHeight;
@@ -60,6 +61,18 @@ public class ShootersII {
 
 		myShip.init(myRoot);
 
+		myEnemy = new PathImageSprite("unc.gif");
+		myEnemy.setHeight(100);
+		myEnemy.setWidth(100);
+		myEnemy.setX((myWindowWidth - myEnemy.getWidth())/2);
+		myEnemy.setY(200);
+		myEnemy.setSpeed(SPRITE_SPEED);
+		myEnemy.setHealth(10);
+		myEnemy.setPath(new double[][]{{100, 100}, {500, 800}, {200, 800}, {600, 0}});
+		myEnemy.setBounds(0, width, 0, height);
+
+		myEnemy.init(myRoot);
+
 		// Respond to input
 		myScene.setOnKeyPressed(e -> handleKeyPressed(e.getCode()));
 		myScene.setOnKeyReleased(e -> handleKeyReleased(e.getCode()));
@@ -76,8 +89,16 @@ public class ShootersII {
 	public void step(double elapsedTime) {
 
 		myShip.step(elapsedTime);
-		for (DirectionImageSprite shooter : shooters) {
-			shooter.step(elapsedTime);
+		if(!myEnemy.step(elapsedTime)) {
+			System.out.println("YOU WIN!");
+			System.exit(0);
+		}
+			
+		for (int i = 0; i < shooters.size(); i++) {
+			DirectionImageSprite shooter = shooters.get(i);
+			if(!shooter.step(elapsedTime)) {
+				shooters.remove(i);
+			}
 		}
 
 		checkCollisions();
@@ -85,18 +106,9 @@ public class ShootersII {
 	}
 
 	private void checkCollisions() {
-		// check for collisions
-		// with shapes, can check precisely
-		/*
-		 * Shape intersect = Shape.intersect(myTopBlock, myBottomBlock); if
-		 * (intersect.getBoundsInLocal().getWidth() != -1) {
-		 * myTopBlock.setFill(Color.MAROON); } else {
-		 * myTopBlock.setFill(Color.RED); } // with images can only check
-		 * bounding box if
-		 * (myBottomBlock.getBoundsInParent().intersects(myBouncer.
-		 * getBoundsInParent())) { myBottomBlock.setFill(Color.BURLYWOOD); }
-		 * else { myBottomBlock.setFill(Color.BISQUE); }
-		 */
+		for(DirectionImageSprite shooter: shooters) {
+			shooter.checkCollision(myEnemy);
+		}
 	}
 
 	private void deleteShooters() {
@@ -121,6 +133,7 @@ public class ShootersII {
 		shooter.setX(fireXPos);
 		shooter.setY(fireYPos);
 		shooter.setSpeed(SHOOTER_SPEED);
+		shooter.setHealth(1);
 		shooter.setRelativeYSpeed(-1);
 		shooter.init(myRoot);
 		

@@ -12,7 +12,7 @@ import javafx.scene.Group;
 public interface Sprite_Interface {
 
 	public void init(Group root);
-	public void step(double elapsedTime);
+	public boolean step(double elapsedTime);
 	
 	public double getX();
 	public double getY();
@@ -29,5 +29,4 @@ public interface Sprite_Interface {
 	public void setSpeed(double speed);
 	
 	public void remove();
-	
 }

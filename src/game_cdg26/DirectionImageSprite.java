@@ -13,18 +13,17 @@ public class DirectionImageSprite extends ImageSprite {
 	}
 	
 	@Override
-	public void step(double elapsedTime) {
+	public boolean step(double elapsedTime) {
 		setX(myRelativeXSpeed * mySpeed * elapsedTime + myXPos);
 		setY(myRelativeYSpeed * mySpeed * elapsedTime + myYPos);
+		return stillAlive;
 	}
 
 	public void setRelativeXSpeed(double xSpeed) {
-		// TODO Auto-generated method stub
 		myRelativeXSpeed = xSpeed;
 	}
 
 	public void setRelativeYSpeed(double ySpeed) {
-		// TODO Auto-generated method stub
 		myRelativeYSpeed = ySpeed;
 	}
 	

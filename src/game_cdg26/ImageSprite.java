@@ -10,6 +10,8 @@ public class ImageSprite implements Sprite_Interface {
 	protected ImageView mySprite;
 	private Group myRoot;
 	private boolean myBoundsSet;
+	private int myHealth = 10;
+	protected boolean stillAlive = true;
 	
 	public ImageSprite(String location) {
         Image image = new Image(getClass().getClassLoader().getResourceAsStream(location));
@@ -23,8 +25,26 @@ public class ImageSprite implements Sprite_Interface {
 	}
 
 	@Override
-	public void step(double elapsedTime) {}
+	public boolean step(double elapsedTime) {
+		return stillAlive;
+	}
 
+	public void setHealth(int health) {
+		myHealth = health;
+	}
+	
+	public int getHealth() {
+		return myHealth;
+	}
+	
+	public void decrementHealth() {
+		myHealth--;
+		if(myHealth <= 0) {
+			remove();
+			stillAlive = false;
+		}
+	}
+	
 	@Override
 	public double getX() {
 		return myXPos;
@@ -102,6 +122,14 @@ public class ImageSprite implements Sprite_Interface {
 	
 	public void removeBounds() {
 		myBoundsSet = false;
+	}
+
+	public void checkCollision(ImageSprite spr) {
+		if(mySprite.getBoundsInParent().intersects(spr.mySprite.getBoundsInParent())) {
+			decrementHealth();
+			spr.decrementHealth();
+		}
+		
 	}
 	
 }
