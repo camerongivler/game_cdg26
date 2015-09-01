@@ -15,23 +15,24 @@ import javafx.scene.paint.Color;
  *
  */
 public class ShootersII {
-	public static final String TITLE = "Example JavaFX";
+	public static final String TITLE = "Shooters II";
 	private static final int SPRITE_SPEED = 200;
 	private static final int SHOOTER_SPEED = 500;
 
 	private Scene myScene;
 	private DirectionImageSprite myShip;
-	private PathImageSprite myEnemy;
 
 	private int myWindowWidth;
 	private int myWindowHeight;
 
 	private Group myRoot;
-	
+
 	private boolean myShotFired = false;
 	private boolean myRightPressed = false, myLeftPressed = false, myUpPressed = false, myDownPressed = false;
 
-	private ArrayList<DirectionImageSprite> shooters;
+	private ArrayList<DirectionImageSprite> myShipShooters;
+	private ArrayList<DirectionImageSprite> myEnemyShooters;
+	private ArrayList<PathImageSprite> myEnemies;
 
 	/**
 	 * Returns name of the game.
@@ -46,38 +47,67 @@ public class ShootersII {
 	public Scene init(int width, int height) {
 		myWindowWidth = width;
 		myWindowHeight = height;
-		shooters = new ArrayList<DirectionImageSprite>();
+		myShipShooters = new ArrayList<DirectionImageSprite>();
+		myEnemyShooters = new ArrayList<DirectionImageSprite>();
+		myEnemies = new ArrayList<PathImageSprite>();
 
 		myRoot = new Group();
 		myScene = new Scene(myRoot, width, height, Color.WHITE);
 
+		addShip(width, height);
+		addEnemies(6, 2);
+
+		// Respond to input
+		myScene.setOnKeyPressed(e -> handleKeyPressed(e.getCode()));
+		myScene.setOnKeyReleased(e -> handleKeyReleased(e.getCode()));
+		// myScene.setOnMouseClicked(e -> handleMouseInput(e.getX(), e.getY()));
+		return myScene;
+	}
+	
+	private void win() {
+		System.out.println("You win.");
+		System.exit(0);
+	}
+	
+	private void lose() {
+		System.out.println("You lose.");
+		System.exit(0);
+	}
+
+	private void addShip(int width, int height) {
 		myShip = new DirectionImageSprite("duke.gif");
 		myShip.setHeight(100);
 		myShip.setWidth(118);
-		myShip.setX((myWindowWidth - myShip.getWidth())/2);
+		myShip.setX((myWindowWidth - myShip.getWidth()) / 2);
 		myShip.setY(myWindowHeight - myShip.getHeight());
 		myShip.setSpeed(SPRITE_SPEED);
 		myShip.setBounds(0, width, 0, height);
 
 		myShip.init(myRoot);
+	}
+	
+	private void addEnemies(int numWide, int numHigh) {
+		double enemyWidth = 100;
+		double enemyHeight = 100;
+		double enemySpaceX = myWindowWidth / (numWide + 1);
+		double enemySpaceY = enemyHeight;
+		PathImageSprite enemy;
 
-		myEnemy = new PathImageSprite("unc.gif");
-		myEnemy.setHeight(100);
-		myEnemy.setWidth(100);
-		myEnemy.setX((myWindowWidth - myEnemy.getWidth())/2);
-		myEnemy.setY(200);
-		myEnemy.setSpeed(SPRITE_SPEED);
-		myEnemy.setHealth(10);
-		myEnemy.setPath(new double[][]{{100, 100}, {500, 800}, {200, 800}, {600, 0}});
-		myEnemy.setBounds(0, width, 0, height);
+		for (int i = 0; i < numHigh; i++) {
+			for (int j = 1; j <= numWide; j++) {
+				enemy = new PathImageSprite("unc.gif");
+				enemy.setHeight(enemyHeight);
+				enemy.setWidth(enemyWidth);
+				enemy.setX(enemySpaceX * (j - 0.5));
+				enemy.setY(enemySpaceY * i + 50);
+				enemy.setSpeed(SPRITE_SPEED);
+				enemy.setHealth(10);
+				enemy.setRelativePath(new double[][] { { -enemySpaceX/2, 0 }, { -enemySpaceX/2, enemySpaceY }, { enemySpaceX/2, enemySpaceY }, { enemySpaceX/2, 0 } });
 
-		myEnemy.init(myRoot);
-
-		// Respond to input
-		myScene.setOnKeyPressed(e -> handleKeyPressed(e.getCode()));
-		myScene.setOnKeyReleased(e -> handleKeyReleased(e.getCode()));
-		myScene.setOnMouseClicked(e -> handleMouseInput(e.getX(), e.getY()));
-		return myScene;
+				enemy.init(myRoot);
+				myEnemies.add(enemy);
+			}
+		}
 	}
 
 	/**
@@ -88,56 +118,92 @@ public class ShootersII {
 	 */
 	public void step(double elapsedTime) {
 
-		myShip.step(elapsedTime);
-		if(!myEnemy.step(elapsedTime)) {
-			System.out.println("YOU WIN!");
-			System.exit(0);
+		if(!myShip.step(elapsedTime)) {
+			lose();
 		}
-			
-		for (int i = 0; i < shooters.size(); i++) {
-			DirectionImageSprite shooter = shooters.get(i);
-			if(!shooter.step(elapsedTime)) {
-				shooters.remove(i);
+		
+		stepShooters(elapsedTime);
+		checkCollisions();
+		deleteShooters();
+		stepEnemies(elapsedTime);
+		fireRandomBullets();
+	}
+	
+	private void stepShooters(double elapsedTime) {
+		for (int i = 0; i < myShipShooters.size(); i++) {
+			DirectionImageSprite shooter = myShipShooters.get(i);
+			if (!shooter.step(elapsedTime)) {
+				myShipShooters.remove(i);
 			}
 		}
 
-		checkCollisions();
-		deleteShooters();
+		for (int i = 0; i < myEnemyShooters.size(); i++) {
+			DirectionImageSprite shooter = myEnemyShooters.get(i);
+			if (!shooter.step(elapsedTime)) {
+				myEnemyShooters.remove(i);
+			}
+		}
+	}
+	
+	private void fireRandomBullets() {
+		for(PathImageSprite enemy: myEnemies) {
+			if(enemy.randomFire()) {
+				myEnemyShooters.add(fireShooter(enemy, 0, 1));
+			}
+		}
+	}
+
+	private void stepEnemies(double elapsedTime) {
+		for (int i = 0; i < myEnemies.size(); i++) {
+			if (!myEnemies.get(i).step(elapsedTime)) {
+				myEnemies.remove(i);
+				i--;
+			}
+		}
+		if(myEnemies.size() == 0) {
+			win();
+		}
 	}
 
 	private void checkCollisions() {
-		for(DirectionImageSprite shooter: shooters) {
-			shooter.checkCollision(myEnemy);
+		for (DirectionImageSprite shooter : myShipShooters) {
+			for(PathImageSprite enemy : myEnemies) {
+				shooter.checkCollision(enemy);
+			}
+		}
+		
+		for (DirectionImageSprite shooter : myEnemyShooters) {
+				shooter.checkCollision(myShip);
 		}
 	}
 
 	private void deleteShooters() {
-		for (int i = 0; i < shooters.size(); i++) {
-			DirectionImageSprite shooter = shooters.get(i);
+		for (int i = 0; i < myShipShooters.size(); i++) {
+			DirectionImageSprite shooter = myShipShooters.get(i);
 			if (shooter.getY() < 0 - shooter.getHeight()) {
 				shooter.remove();
-				shooters.remove(i);
+				myShipShooters.remove(i);
 				i--;
 			}
 		}
 	}
 
-	private void fireShooter() {
+	private DirectionImageSprite fireShooter(ImageSprite ship, double xspeed, double yspeed) {
 		DirectionImageSprite shooter = new DirectionImageSprite("shooter.jpg");
-		shooters.add(shooter);
 
-		double fireXPos = myShip.myXPos + myShip.myWidth / 2;
-		double fireYPos = myShip.myYPos;
+		double fireXPos = ship.myXPos + ship.myWidth / 2;
+		double fireYPos = ship.myYPos;
 		shooter.setHeight(15);
 		shooter.setWidth(8.7);
 		shooter.setX(fireXPos);
 		shooter.setY(fireYPos);
 		shooter.setSpeed(SHOOTER_SPEED);
 		shooter.setHealth(1);
-		shooter.setRelativeYSpeed(-1);
+		shooter.setRelativeXSpeed(xspeed);
+		shooter.setRelativeYSpeed(yspeed);
 		shooter.init(myRoot);
 		
-		myShotFired = true;
+		return shooter;
 	}
 
 	// What to do each time a key is pressed
@@ -160,8 +226,10 @@ public class ShootersII {
 			myDownPressed = true;
 			break;
 		case SPACE:
-			if(!myShotFired)
-				fireShooter();
+			if (!myShotFired) {
+				myShipShooters.add(fireShooter(myShip, 0, -1));
+				myShotFired = true;
+			}
 		default:
 			// do nothing
 		}
@@ -194,11 +262,7 @@ public class ShootersII {
 	}
 
 	// What to do each time a key is pressed
-	private void handleMouseInput(double x, double y) {
-		/*
-		 * if (myBottomBlock.contains(x, y)) {
-		 * myBottomBlock.setScaleX(myBottomBlock.getScaleX() * GROWTH_RATE);
-		 * myBottomBlock.setScaleY(myBottomBlock.getScaleY() * GROWTH_RATE); }
-		 */
-	}
+	/*
+	 * private void handleMouseInput(double x, double y) { }
+	 */
 }

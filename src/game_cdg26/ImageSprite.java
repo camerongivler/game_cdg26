@@ -12,6 +12,7 @@ public class ImageSprite implements Sprite_Interface {
 	private boolean myBoundsSet;
 	private int myHealth = 10;
 	protected boolean stillAlive = true;
+	private final double FIRE_PROBABILITY = 0.996;
 	
 	public ImageSprite(String location) {
         Image image = new Image(getClass().getClassLoader().getResourceAsStream(location));
@@ -53,6 +54,10 @@ public class ImageSprite implements Sprite_Interface {
 	@Override
 	public double getY() {
 		return myYPos;
+	}
+	
+	public boolean randomFire() {
+		return Math.random() > FIRE_PROBABILITY;
 	}
 
 	@Override

@@ -29,7 +29,6 @@ public class PathImageSprite extends ImageSprite {
 		double ySpeed = mySpeed * ydist / dist;
 		double targetX = xSpeed * elapsedTime + myXPos;
 		double targetY = ySpeed * elapsedTime + myYPos;
-//		checkOvershoot(targetX, targetY, elapsedTime);
 		checkOvershoot(targetX, targetY, xSpeed, ySpeed);
 		setX(targetX);
 		setY(targetY);
@@ -52,45 +51,6 @@ public class PathImageSprite extends ImageSprite {
 			incMyCurrentTarget();
 		}
 	}
-	
-/*	private void checkOvershoot(double targetX, double targetY, double elapsedTime) {
-		double xOvershoot = 0, yOvershoot = 0;
-		if(targetX >= myPath[myCurrentTarget][0] && myXSpeed > 0) {
-			xOvershoot = targetX - myPath[myCurrentTarget][0];
-			targetX = myPath[myCurrentTarget][0];
-			incMyCurrentTarget();
-		} else if(targetX <= myPath[myCurrentTarget][0] && myXSpeed < 0) {
-			xOvershoot = myPath[myCurrentTarget][0] - targetX;
-			targetX = myPath[myCurrentTarget][0];
-			incMyCurrentTarget();
-		}
-		
-		if(targetY >= myPath[myCurrentTarget][1] && myYSpeed > 0) {
-			yOvershoot = targetY - myPath[myCurrentTarget][1];
-			targetY = myPath[myCurrentTarget][1];
-			incMyCurrentTarget();
-		} else if(targetY <= myPath[myCurrentTarget][1] && myYSpeed < 0) {
-			yOvershoot = myPath[myCurrentTarget][1] - targetY;
-			targetY = myPath[myCurrentTarget][1];
-			incMyCurrentTarget();
-		}
-		
-		if(xOvershoot == 0 && yOvershoot == 0) {
-			return;
-		}
-		double overshoot = Math.sqrt(Math.pow(xOvershoot, 2) + Math.pow(yOvershoot, 2));
-		double dist = setMySpeed();
-		double extraTime = overshoot / dist * elapsedTime;
-		step(extraTime);
-	}
-	
-	private double setMySpeed() {
-		double xdist = myPath[myCurrentTarget][0] - myXPos;
-		double ydist = myPath[myCurrentTarget][1] - myYPos;
-		double dist = Math.sqrt(Math.pow(xdist, 2) + Math.pow(ydist, 2));
-		myXSpeed = mySpeed * xdist / dist;
-		myYSpeed = mySpeed * ydist / dist;
-	} */
 	
 	public void setPath(double[][] path) {
 		myPath = path;
