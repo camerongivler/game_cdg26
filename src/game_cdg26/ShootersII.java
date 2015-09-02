@@ -4,11 +4,12 @@
 package game_cdg26;
 
 import java.util.ArrayList;
-
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Polygon;
+import javafx.scene.text.*;
 
 /**
  * @author Cameron
@@ -18,6 +19,12 @@ public class ShootersII {
 	public static final String TITLE = "Shooters II";
 	private static final int SPRITE_SPEED = 200;
 	private static final int SHOOTER_SPEED = 500;
+	private static final double EASY_FIRE_PROB = 0.05;
+	private static final double HARD_FIRE_PROB = 0.09;
+
+	private enum Difficulty {
+		EASY, HARD
+	}
 
 	private Scene myScene;
 	private DirectionImageSprite myShip;
@@ -33,6 +40,13 @@ public class ShootersII {
 	private ArrayList<DirectionImageSprite> myShipShooters;
 	private ArrayList<DirectionImageSprite> myEnemyShooters;
 	private ArrayList<PathImageSprite> myEnemies;
+
+	private boolean myStartScreen = false;
+	private boolean myAnimating = false;
+	private boolean myWinScreen = false;
+
+	Difficulty myDifficulty = Difficulty.HARD;
+	Polygon myTriangle;
 
 	/**
 	 * Returns name of the game.
@@ -54,24 +68,99 @@ public class ShootersII {
 		myRoot = new Group();
 		myScene = new Scene(myRoot, width, height, Color.WHITE);
 
-		addShip(width, height);
-		addEnemies(6, 2);
-
 		// Respond to input
 		myScene.setOnKeyPressed(e -> handleKeyPressed(e.getCode()));
 		myScene.setOnKeyReleased(e -> handleKeyReleased(e.getCode()));
 		// myScene.setOnMouseClicked(e -> handleMouseInput(e.getX(), e.getY()));
+
+		showStartScreen();
+
 		return myScene;
 	}
-	
-	private void win() {
-		System.out.println("You win.");
-		System.exit(0);
+
+	private void showStartScreen() {
+		myStartScreen = true;
+		Text easy = new Text(myWindowWidth / 2, myWindowHeight / 2, "Easy");
+		easy.setFont(new Font(50));
+		Text hard = new Text(myWindowWidth / 2, myWindowHeight / 2 + 80, "Hard");
+		hard.setFont(new Font(50));
+
+		myTriangle = new Polygon();
+		moveTriangle();
+
+		myRoot.getChildren().add(easy);
+		myRoot.getChildren().add(hard);
+		myRoot.getChildren().add(myTriangle);
 	}
-	
+
+	private void moveTriangle() {
+		myTriangle.getPoints().clear();
+		if (myDifficulty == Difficulty.EASY) {
+			myTriangle.getPoints()
+					.addAll(new Double[] { myWindowWidth / 2.0 - 40, myWindowHeight / 2.0 + 40,
+							myWindowWidth / 2.0 - 40, myWindowHeight / 2.0 + 80, myWindowWidth / 2.0 - 10,
+							myWindowHeight / 2.0 + 60 });
+			myDifficulty = Difficulty.HARD;
+		} else {
+			myTriangle.getPoints()
+					.addAll(new Double[] { myWindowWidth / 2.0 - 40, myWindowHeight / 2.0 - 40,
+							myWindowWidth / 2.0 - 40, myWindowHeight / 2.0, myWindowWidth / 2.0 - 10,
+							myWindowHeight / 2.0 - 20 });
+			myDifficulty = Difficulty.EASY;
+		}
+	}
+
+	private void showScene(int width, int height) {
+		myRoot.getChildren().clear();
+		addShip(width, height);
+		addEnemies(6, 2);
+		myAnimating = true;
+	}
+
+	private void resetCanvas() {
+		myAnimating = false;
+		myWinScreen = false;
+		myStartScreen = false;
+		remove_references(myShipShooters);
+		remove_references(myEnemyShooters);
+		remove_references(myEnemies);
+		if(myShip != null) {
+			myShip.remove();
+			myShip = null;
+		}
+		myRoot.getChildren().clear();
+	}
+
+	private void remove_references(ArrayList<? extends ImageSprite> sprites) {
+		for (ImageSprite sprite : sprites) {
+			sprite.remove();
+		}
+		sprites.clear();
+	}
+
+	private void showWinScreen(boolean won) {
+		myWinScreen = true;
+		String text;
+		if(won) {
+			text = "Congratulations!  You won!";
+		} else {
+			text = "Better luck next time!";
+		}
+		
+		Text win = new Text(text);
+		win.setY(myWindowHeight/2);
+		win.setFont(new Font(60));
+		myRoot.getChildren().add(win);
+	}
+
+	private void win() {
+		resetCanvas();
+		showWinScreen(true);
+	}
+
 	private void lose() {
-		System.out.println("You lose.");
-		System.exit(0);
+		resetCanvas();
+		showWinScreen(false);
 	}
 
 	private void addShip(int width, int height) {
@@ -85,7 +174,7 @@ public class ShootersII {
 
 		myShip.init(myRoot);
 	}
-	
+
 	private void addEnemies(int numWide, int numHigh) {
 		double enemyWidth = 100;
 		double enemyHeight = 100;
@@ -102,10 +191,32 @@ public class ShootersII {
 				enemy.setY(enemySpaceY * i + 50);
 				enemy.setSpeed(SPRITE_SPEED);
 				enemy.setHealth(10);
-				enemy.setRelativePath(new double[][] { { -enemySpaceX/2, 0 }, { -enemySpaceX/2, enemySpaceY }, { enemySpaceX/2, enemySpaceY }, { enemySpaceX/2, 0 } });
+				enemy.setRelativePath(new double[][] { { -enemySpaceX / 2, 0 }, { -enemySpaceX / 2, enemySpaceY },
+						{ enemySpaceX / 2, enemySpaceY }, { enemySpaceX / 2, 0 } });
+				if (myDifficulty == Difficulty.HARD) {
+					enemy.setFireProb(HARD_FIRE_PROB);
+				} else {
+					enemy.setFireProb(EASY_FIRE_PROB);
+				}
 
 				enemy.init(myRoot);
 				myEnemies.add(enemy);
+			}
+		}
+	}
+	
+	private void stop_shooting() {
+		for(PathImageSprite enemy : myEnemies) {
+			enemy.setFireProb(0);
+		}
+	}
+	
+	private void start_shooting() {
+		for(PathImageSprite enemy : myEnemies) {
+			if(myDifficulty == Difficulty.EASY) {
+				enemy.setFireProb(EASY_FIRE_PROB);
+			} else {
+				enemy.setFireProb(HARD_FIRE_PROB);
 			}
 		}
 	}
@@ -117,18 +228,21 @@ public class ShootersII {
 	 * simple ways work too.
 	 */
 	public void step(double elapsedTime) {
+		if (!myAnimating)
+			return;
 
-		if(!myShip.step(elapsedTime)) {
+		if (!myShip.step(elapsedTime)) {
 			lose();
+			return;
 		}
-		
+
 		stepShooters(elapsedTime);
+		stepEnemies(elapsedTime);
 		checkCollisions();
 		deleteShooters();
-		stepEnemies(elapsedTime);
 		fireRandomBullets();
 	}
-	
+
 	private void stepShooters(double elapsedTime) {
 		for (int i = 0; i < myShipShooters.size(); i++) {
 			DirectionImageSprite shooter = myShipShooters.get(i);
@@ -144,10 +258,10 @@ public class ShootersII {
 			}
 		}
 	}
-	
+
 	private void fireRandomBullets() {
-		for(PathImageSprite enemy: myEnemies) {
-			if(enemy.randomFire()) {
+		for (PathImageSprite enemy : myEnemies) {
+			if (enemy.randomFire()) {
 				myEnemyShooters.add(fireShooter(enemy, 0, 1));
 			}
 		}
@@ -160,20 +274,20 @@ public class ShootersII {
 				i--;
 			}
 		}
-		if(myEnemies.size() == 0) {
+		if (myEnemies.size() == 0) {
 			win();
 		}
 	}
 
 	private void checkCollisions() {
 		for (DirectionImageSprite shooter : myShipShooters) {
-			for(PathImageSprite enemy : myEnemies) {
+			for (PathImageSprite enemy : myEnemies) {
 				shooter.checkCollision(enemy);
 			}
 		}
-		
+
 		for (DirectionImageSprite shooter : myEnemyShooters) {
-				shooter.checkCollision(myShip);
+			shooter.checkCollision(myShip);
 		}
 	}
 
@@ -202,12 +316,39 @@ public class ShootersII {
 		shooter.setRelativeXSpeed(xspeed);
 		shooter.setRelativeYSpeed(yspeed);
 		shooter.init(myRoot);
-		
+
 		return shooter;
 	}
 
 	// What to do each time a key is pressed
 	private void handleKeyPressed(KeyCode code) {
+
+		if (myStartScreen) {
+			switch (code) {
+			case UP:
+			case DOWN:
+				moveTriangle();
+				break;
+			case ENTER:
+			case SPACE:
+				resetCanvas();
+				showScene(myWindowWidth, myWindowHeight);
+			default:
+			}
+			return;
+		}
+		
+		if(myWinScreen) {
+			switch (code) {
+			case ENTER:
+			case SPACE:
+				resetCanvas();
+				showStartScreen();
+			default:
+			}
+			return;
+		}
+
 		switch (code) {
 		case RIGHT:
 			myShip.setRelativeXSpeed(1);
@@ -230,6 +371,10 @@ public class ShootersII {
 				myShipShooters.add(fireShooter(myShip, 0, -1));
 				myShotFired = true;
 			}
+		case S:
+			stop_shooting();
+		case B:
+			start_shooting();
 		default:
 			// do nothing
 		}
@@ -237,6 +382,10 @@ public class ShootersII {
 
 	// What to do each time a key is pressed
 	private void handleKeyReleased(KeyCode code) {
+		if (myStartScreen || myWinScreen) {
+			return;
+		}
+
 		switch (code) {
 		case RIGHT:
 			myRightPressed = false;
