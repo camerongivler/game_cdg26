@@ -4,8 +4,11 @@
 package game_cdg26;
 
 import java.util.ArrayList;
+
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
@@ -19,8 +22,9 @@ public class ShootersII {
 	public static final String TITLE = "Shooters II";
 	private static final int SPRITE_SPEED = 200;
 	private static final int SHOOTER_SPEED = 500;
-	private static final double EASY_FIRE_PROB = 0.05;
-	private static final double HARD_FIRE_PROB = 0.09;
+	private static final double EASY_FIRE_PROB = 0.005;
+	private static final double HARD_FIRE_PROB = 0.009;
+	private static final String myFont = "Arial";
 
 	private enum Difficulty {
 		EASY, HARD
@@ -80,32 +84,45 @@ public class ShootersII {
 
 	private void showStartScreen() {
 		myStartScreen = true;
-		Text easy = new Text(myWindowWidth / 2, myWindowHeight / 2, "Easy");
-		easy.setFont(new Font(50));
-		Text hard = new Text(myWindowWidth / 2, myWindowHeight / 2 + 80, "Hard");
-		hard.setFont(new Font(50));
+		showLabel("Shooters II", 50, 20, 60);
+		showLabel("Easy", 50, 45, 40);
+		showLabel("Hard", 50, 50, 40);
 
 		myTriangle = new Polygon();
 		moveTriangle();
-
-		myRoot.getChildren().add(easy);
-		myRoot.getChildren().add(hard);
 		myRoot.getChildren().add(myTriangle);
+	}
+
+	/**
+	 * Shows a label on the screen at some scaled position (between 0 and 100) for x and y
+	 * @param text The text to display
+	 * @param leftPercent the scaled x coordinate (0-100)
+	 * @param topPercent the scaled y coordinate (0-100)
+	 */
+	private void showLabel(String text, double leftPercent, double topPercent, int fontSize) {
+		Label lbl = new Label(text);
+		myRoot.getChildren().add(lbl);
+		lbl.setFont(new Font(myFont, fontSize));
+		lbl.applyCss();
+		double pixelsW = (myWindowWidth - lbl.prefWidth(-1)) * leftPercent / 100;
+		double pixelsH = (myWindowHeight - lbl.prefHeight(-1)) * topPercent / 100;
+		lbl.setLayoutX(pixelsW);
+		lbl.setLayoutY(pixelsH);
 	}
 
 	private void moveTriangle() {
 		myTriangle.getPoints().clear();
 		if (myDifficulty == Difficulty.EASY) {
 			myTriangle.getPoints()
-					.addAll(new Double[] { myWindowWidth / 2.0 - 40, myWindowHeight / 2.0 + 40,
-							myWindowWidth / 2.0 - 40, myWindowHeight / 2.0 + 80, myWindowWidth / 2.0 - 10,
-							myWindowHeight / 2.0 + 60 });
+					.addAll(new Double[] { 	myWindowWidth / 2.0 - 90, myWindowHeight * 45 / 100.0 - 20,
+											myWindowWidth / 2.0 - 90, myWindowHeight * 45 / 100.0 + 20,
+											myWindowWidth / 2.0 - 60, myWindowHeight * 45 / 100.0 });
 			myDifficulty = Difficulty.HARD;
 		} else {
 			myTriangle.getPoints()
-					.addAll(new Double[] { myWindowWidth / 2.0 - 40, myWindowHeight / 2.0 - 40,
-							myWindowWidth / 2.0 - 40, myWindowHeight / 2.0, myWindowWidth / 2.0 - 10,
-							myWindowHeight / 2.0 - 20 });
+					.addAll(new Double[] { 	myWindowWidth / 2.0 - 90, myWindowHeight * 50 / 100.0 - 20,
+											myWindowWidth / 2.0 - 90, myWindowHeight * 50 / 100.0 + 20,
+											myWindowWidth / 2.0 - 60, myWindowHeight * 50 / 100.0 });
 			myDifficulty = Difficulty.EASY;
 		}
 	}
@@ -147,10 +164,8 @@ public class ShootersII {
 			text = "Better luck next time!";
 		}
 		
-		Text win = new Text(text);
-		win.setY(myWindowHeight/2);
-		win.setFont(new Font(60));
-		myRoot.getChildren().add(win);
+		showLabel(text, 50, 30, 60);
+		showLabel("Press Enter", 50, 50, 30);
 	}
 
 	private void win() {
@@ -176,8 +191,8 @@ public class ShootersII {
 	}
 
 	private void addEnemies(int numWide, int numHigh) {
-		double enemyWidth = 100;
-		double enemyHeight = 100;
+		double enemyWidth = 75;
+		double enemyHeight = 75;
 		double enemySpaceX = myWindowWidth / (numWide + 1);
 		double enemySpaceY = enemyHeight;
 		PathImageSprite enemy;
@@ -190,9 +205,10 @@ public class ShootersII {
 				enemy.setX(enemySpaceX * (j - 0.5));
 				enemy.setY(enemySpaceY * i + 50);
 				enemy.setSpeed(SPRITE_SPEED);
-				enemy.setHealth(10);
+				enemy.setHealth(7);
 				enemy.setRelativePath(new double[][] { { -enemySpaceX / 2, 0 }, { -enemySpaceX / 2, enemySpaceY },
 						{ enemySpaceX / 2, enemySpaceY }, { enemySpaceX / 2, 0 } });
+
 				if (myDifficulty == Difficulty.HARD) {
 					enemy.setFireProb(HARD_FIRE_PROB);
 				} else {
@@ -207,7 +223,7 @@ public class ShootersII {
 	
 	private void stop_shooting() {
 		for(PathImageSprite enemy : myEnemies) {
-			enemy.setFireProb(0);
+			enemy.setFireProb(0.0);
 		}
 	}
 	
@@ -341,7 +357,6 @@ public class ShootersII {
 		if(myWinScreen) {
 			switch (code) {
 			case ENTER:
-			case SPACE:
 				resetCanvas();
 				showStartScreen();
 			default:
@@ -371,10 +386,13 @@ public class ShootersII {
 				myShipShooters.add(fireShooter(myShip, 0, -1));
 				myShotFired = true;
 			}
+			break;
 		case S:
 			stop_shooting();
+			break;
 		case B:
 			start_shooting();
+			break;
 		default:
 			// do nothing
 		}
@@ -409,9 +427,4 @@ public class ShootersII {
 			// do nothing
 		}
 	}
-
-	// What to do each time a key is pressed
-	/*
-	 * private void handleMouseInput(double x, double y) { }
-	 */
 }
