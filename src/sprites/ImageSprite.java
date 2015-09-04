@@ -1,4 +1,4 @@
-package game_cdg26;
+package sprites;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -6,17 +6,32 @@ import javafx.scene.Group;
 
 public class ImageSprite implements Sprite_Interface {
 
-	protected double myXPos = 0, myYPos = 0, myHeight = 100, myWidth = 100, mySpeed = 0, myXMin = 0, myXMax = 0, myYMin = 0, myYMax = 0;
+	protected double myXPos = 0, myYPos = 0, myHeight = 100, myWidth = 100, mySpeed = 0, myXMin = 0, myXMax = 0,
+			myYMin = 0, myYMax = 0;
 	protected ImageView mySprite;
 	private Group myRoot;
 	private boolean myBoundsSet;
 	private int myHealth = 10;
 	protected boolean stillAlive = true;
-	private double fireProbability = 0.006;
-	
+	private double fireProbability = 0.0;
+
 	public ImageSprite(String location) {
-        Image image = new Image(getClass().getClassLoader().getResourceAsStream(location));
-        mySprite = new ImageView(image);
+		Image image = new Image(getClass().getClassLoader().getResourceAsStream(location));
+		mySprite = new ImageView(image);
+	}
+
+	public ImageSprite(String location, double xPos, double yPos, double width, double height, double speed) {
+		this(location);
+		setX(xPos);
+		setY(yPos);
+		setWidth(width);
+		setHeight(height);
+		setSpeed(speed);
+	}
+
+	public ImageSprite(String location, double xPos, double yPos, double width, double height, double speed, Group root) {
+		this(location, xPos, yPos, width, height, speed);
+		init(root);
 	}
 	
 	@Override
@@ -33,23 +48,27 @@ public class ImageSprite implements Sprite_Interface {
 	public void setHealth(int health) {
 		myHealth = health;
 	}
-	
+
 	public int getHealth() {
 		return myHealth;
 	}
-	
+
 	public void decrementHealth() {
 		myHealth--;
-		if(myHealth <= 0) {
+		if (myHealth <= 0) {
 			remove();
 			stillAlive = false;
 		}
 	}
 	
+	public double getSpeed() {
+		return mySpeed;
+	}
+
 	public void setFireProb(double prob) {
 		fireProbability = prob;
 	}
-	
+
 	@Override
 	public double getX() {
 		return myXPos;
@@ -59,14 +78,14 @@ public class ImageSprite implements Sprite_Interface {
 	public double getY() {
 		return myYPos;
 	}
-	
+
 	public boolean randomFire() {
 		return Math.random() < fireProbability;
 	}
 
 	@Override
 	public void setX(double xPos) {
-		if(myBoundsSet && xPos > myXMax) {
+		if (myBoundsSet && xPos > myXMax) {
 			xPos = myXMax;
 		} else if (myBoundsSet && xPos < myXMin) {
 			xPos = myXMin;
@@ -78,12 +97,12 @@ public class ImageSprite implements Sprite_Interface {
 
 	@Override
 	public void setY(double yPos) {
-		if(myBoundsSet && yPos > myYMax) {
+		if (myBoundsSet && yPos > myYMax) {
 			yPos = myYMax;
 		} else if (myBoundsSet && yPos < myYMin) {
 			yPos = myYMin;
 		}
-		
+
 		mySprite.setY(yPos);
 		myYPos = yPos;
 	}
@@ -107,19 +126,19 @@ public class ImageSprite implements Sprite_Interface {
 	@Override
 	public void setWidth(double width) {
 		myWidth = width;
-        mySprite.setFitWidth(width);
+		mySprite.setFitWidth(width);
 	}
 
 	@Override
 	public void setSpeed(double speed) {
 		mySpeed = speed;
 	}
-	
+
 	@Override
 	public void remove() {
 		myRoot.getChildren().remove(mySprite);
 	}
-	
+
 	@Override
 	public void setBounds(double xmin, double xmax, double ymin, double ymax) {
 		myBoundsSet = true;
@@ -128,17 +147,17 @@ public class ImageSprite implements Sprite_Interface {
 		myYMin = ymin;
 		myYMax = ymax - myHeight;
 	}
-	
+
 	public void removeBounds() {
 		myBoundsSet = false;
 	}
 
 	public void checkCollision(ImageSprite spr) {
-		if(mySprite.getBoundsInParent().intersects(spr.mySprite.getBoundsInParent())) {
+		if (mySprite.getBoundsInParent().intersects(spr.mySprite.getBoundsInParent())) {
 			decrementHealth();
 			spr.decrementHealth();
 		}
-		
+
 	}
-	
+
 }

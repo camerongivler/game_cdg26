@@ -1,7 +1,7 @@
 /**
  * 
  */
-package game_cdg26;
+package sprites;
 
 import javafx.scene.Group;
 
